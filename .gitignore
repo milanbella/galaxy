@@ -1,0 +1,5 @@
+onestopsoft-idempiere-1.0.0.tar.gz
+__init__.py
+__init__.pyc
+__pycache__/
+.mypy_cache/
