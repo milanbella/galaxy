@@ -51,31 +51,72 @@ class Idempiere:
             con.close()
             cur.close()
 
-    def getSourcodeSqlsDict(self) -> Dict[str, str]:
+    def getSourcodeSqls(self) -> List[Dict[str, str]]:
         migrationDirPath = '{}/{}'.format(self.idempiereInstallationPath, self.cMIGRATION_DIR)
-        sqls = {}
+        sqls = []
         for (dirpath, dirnames, filenames) in os.walk(migrationDirPath):
-            if re.search(r'/i\d+.\w+/postgresql', dirpath) != None:
-                fs = list(filter(lambda x: re.search(r'\.sql$', x) != None ,filenames))
-                for f in fs:
-                    sqls[f] = '{}/{}'.format(dirpath, f)
+            for f in filenames:
+                folder = os.path.split(dirpath)[0]
+                folder = os.path.split(folder)[1]
+                match = re.search(r'/(i\d+.\w+)/postgresql/.*\.sql', os.path.join(dirpath, f))
+                if match != None:
+                        sqls.append({
+                            'filePath': os.path.join(dirpath, f),
+                            'fileName': f,
+                            'folder': folder,
+                        })
         return sqls
 
-    def getNotExecutedSqlsDict(self) -> Dict[str, str]:
-        sourcecodeSqlsDict = self.getSourcodeSqlsDict()
+    def getNotExecutedSqls(self, sourcodeSqls) -> List[Dict[str, str]]:
+        sourcecodeSqls = self.getSourcodeSqls()
         executedSqls = self.getExecutedSqls()
 
-        sqlsNotExecutedDict = {}
-        for sql in sourcecodeSqlsDict.keys():
-            if sql not in set(executedSqls):
-                sqlsNotExecutedDict[sql] = sourcecodeSqlsDict[sql]
+        notExecutedSqls = []
+        for sql in sourcecodeSqls:
+            if sql['fileName'] not in set(executedSqls):
+                notExecutedSqls.append(sql)
 
-        sqlsNotExecutedList = list(sqlsNotExecutedDict.keys());
-        sqlsNotExecutedList.sort()
+        return notExecutedSqls
 
-        sqlsNotExecutedDict = collections.OrderedDict()
-        for sql in sqlsNotExecutedList:
-            sqlsNotExecutedDict[sql] = sourcecodeSqlsDict[sql]
+    def getLocalSqlSqls(self) -> List[Dict[str, str]]:
+        migrationDirPath = '{}/{}/{}'.format(self.idempiereInstallationPath, self.cMIGRATION_DIR, 'local_sql')
+        sqls = []
+        for (dirpath, dirnames, filenames) in os.walk(migrationDirPath):
+            for f in filenames:
+                match = re.search(r'/local_sql/.*\.sql', os.path.join(dirpath, f))
+                if match != None:
+                    sqls.append({
+                        'filePath': os.path.join(dirpath, f),
+                        'fileName': f,
+                    })
+        return sqls
 
-        return sqlsNotExecutedDict
+    def getProcessesPostMigrationSqls(self) -> List[Dict[str, str]]:
+        migrationDirPath = '{}/{}/{}/postgresql'.format(self.idempiereInstallationPath, self.cMIGRATION_DIR, 'processes_post_migration')
+        sqls = []
+        for (dirpath, dirnames, filenames) in os.walk(migrationDirPath):
+            for f in filenames:
+                match = re.search(r'/processes_post_migration/postgresql/.*\.sql', os.path.join(dirpath, f))
+                if match != None:
+                    sqls.append({
+                        'filePath': os.path.join(dirpath, f),
+                        'fileName': f,
+                    })
+        return sqls
 
+    def getToBeExecutedSqls(self) -> List[Dict[str, str]]:
+        sourcodeSqls = self.getSourcodeSqls();
+        notExecutedSqls = self.getNotExecutedSqls(sourcodeSqls);
+        notExecutedSqls.sort(key = lambda d: (d['folder'], d['fileName']));
+        notExecutedSqls = [x['filePath'] for x in notExecutedSqls]
+
+        localSqlSqls = self.getLocalSqlSqls()
+        localSqlSqls.sort(key = lambda d: d['fileName']);
+        localSqlSqls = [x['filePath'] for x in localSqlSqls]
+
+        processesPostMigrationSqls = self.getProcessesPostMigrationSqls()
+        processesPostMigrationSqls.sort(key = lambda d: d['fileName']);
+        processesPostMigrationSqls = [x['filePath'] for x in processesPostMigrationSqls]
+
+        toBeExecutedSqls = notExecutedSqls + localSqlSqls + processesPostMigrationSqls
+        return toBeExecutedSqls
