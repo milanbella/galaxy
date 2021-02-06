@@ -54,7 +54,7 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         idempiere_path=dict(type='str', required=False, default='/home/idempiere/idempiere-server'),
-        db_adempiere_user_password=dict(type='str', required=False, default='adempiere'),
+        db_adempiere_user_password=dict(type='str', required=True),
         db_host=dict(type='str', required=False, default='localhost'),
         db_port=dict(type='int', required=False, default=5432)
     )
@@ -89,7 +89,7 @@ def run_module():
     # part where your module will do what it needs to do)
 
     idempiere = Idempiere(module.params['idempiere_path'], module.params['db_adempiere_user_password'], module.params['db_host'], module.params['db_port'])
-    sqlsList = idempiere.getNotExecutedSqlsDict()
+    sqlsList = idempiere.getToBeExecutedSqls()
     result['sql_scripts_to_be_executed'] = sqlsList 
 
     # use whatever logic you need to determine whether or not this module

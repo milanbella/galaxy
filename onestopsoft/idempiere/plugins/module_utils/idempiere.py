@@ -36,8 +36,11 @@ class Idempiere:
             raise Exception('idempiereInstallationPath \'{}\' either does not exists or is not the directory'.format(idempiereInstallationPath))
 
     def getConnection(self) -> DbConnection:
-        conn = psycopg2.connect(dbname='idempiere', user='adempiere', password = self.dbAdempiereUserPassword, host = self.dbHost, port = self.dbPort)
-        return conn
+        try:
+            conn = psycopg2.connect(dbname='idempiere', user='adempiere', password = self.dbAdempiereUserPassword, host = self.dbHost, port = self.dbPort)
+            return conn
+        except:
+            raise Exception('Could not connect do idempiere database')
 
     def getExecutedSqls(self) -> List[str]:
         try:
@@ -104,19 +107,19 @@ class Idempiere:
                     })
         return sqls
 
-    def getToBeExecutedSqls(self) -> List[Dict[str, str]]:
+    def getToBeExecutedSqls(self) -> List[str]:
         sourcodeSqls = self.getSourcodeSqls();
         notExecutedSqls = self.getNotExecutedSqls(sourcodeSqls);
         notExecutedSqls.sort(key = lambda d: (d['folder'], d['fileName']));
-        notExecutedSqls = [x['filePath'] for x in notExecutedSqls]
+        notExecutedSqlsList = [x['filePath'] for x in notExecutedSqls]
 
         localSqlSqls = self.getLocalSqlSqls()
         localSqlSqls.sort(key = lambda d: d['fileName']);
-        localSqlSqls = [x['filePath'] for x in localSqlSqls]
+        localSqlSqlsList = [x['filePath'] for x in localSqlSqls]
 
         processesPostMigrationSqls = self.getProcessesPostMigrationSqls()
         processesPostMigrationSqls.sort(key = lambda d: d['fileName']);
-        processesPostMigrationSqls = [x['filePath'] for x in processesPostMigrationSqls]
+        processesPostMigrationSqlsList = [x['filePath'] for x in processesPostMigrationSqls]
 
-        toBeExecutedSqls = notExecutedSqls + localSqlSqls + processesPostMigrationSqls
-        return toBeExecutedSqls
+        toBeExecutedSqlsList = notExecutedSqlsList + localSqlSqlsList + processesPostMigrationSqlsList
+        return toBeExecutedSqlsList

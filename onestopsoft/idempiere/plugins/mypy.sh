@@ -9,4 +9,4 @@ if [ ! -d ${HOME}/module_utils/ansible_collections/onestopsoft/idempiere/plugins
 fi
 export PYTHONPATH=${HOME}/module_utils
 export MYPYPATH=${HOME}/module_utils
-mypy module_utils/ modules/
+mypy --ignore-missing-imports module_utils/ modules/
