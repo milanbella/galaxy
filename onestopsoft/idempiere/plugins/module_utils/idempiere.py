@@ -11,9 +11,6 @@ import os
 import re
 import collections
 
-#vault_role_postgres_postgres_password: TaWJqCZHPFEEOb3lBX8M$
-#vault_role_idempiere_db_adempiere_user_password: p3nR4qlqfc5Venz6AFHo$
-
 class AnyClass:
     def __getattr__(self, item: str) -> Any:
         pass
